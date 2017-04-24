@@ -5,7 +5,14 @@ Unity implementation of the interfaces in Microsoft.Extensions.DependencyInjecti
 
 You can get started with `DS.Unity.Extensions.DependencyInjection` by [grabbing the latest NuGet package](https://www.nuget.org/packages/DS.Unity.Extensions.DependencyInjection).
 
-Example usage
+
+## Get Started
+
+- Reference the `DS.Unity.Extensions.DependencyInjection` package from NuGet.
+- In the `ConfigureServices` method of your `Startup` class...
+  - Register services from the `IServiceCollection`.
+  - Build your container.
+  - Create an `UnityServiceProvider` using the container and return it.
 
 ```C#
 public IServiceProvider ConfigureServices(IServiceCollection services)
