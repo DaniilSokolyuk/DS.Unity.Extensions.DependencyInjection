@@ -1,11 +1,13 @@
 # DS.Unity.Extensions.DependencyInjection
 Unity implementation of the interfaces in Microsoft.Extensions.DependencyInjection.Abstractions
 
-Nuget https://www.nuget.org/packages/DS.Unity.Extensions.DependencyInjection
+## Get Packages
+
+You can get started with `DS.Unity.Extensions.DependencyInjection` by [grabbing the latest NuGet package](https://www.nuget.org/packages/DS.Unity.Extensions.DependencyInjection).
 
 Example usage
 
-
+```C#
 public IServiceProvider ConfigureServices(IServiceCollection services)
 {
   services.AddMvc();
@@ -16,3 +18,4 @@ public IServiceProvider ConfigureServices(IServiceCollection services)
   container.Populate(services);
   return new UnityServiceProvider(container);
 }
+```
