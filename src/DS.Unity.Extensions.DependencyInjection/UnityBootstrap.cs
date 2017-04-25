@@ -9,19 +9,19 @@ namespace DS.Unity.Extensions.DependencyInjection
 {
     public static class UnityBootstrapper
     {
-        public static void Populate(this IUnityContainer container, IServiceCollection services)
+        public static void Populate(this IUnityContainer container, IEnumerable<ServiceDescriptor> descriptors)
         {
             container.AddExtension(new EnumerableExtension());
 
-            container.RegisterInstance(services);
+            container.RegisterInstance(descriptors);
             container.RegisterType<IServiceProvider, UnityServiceProvider>();
-            container.RegisterType<IServiceScopeFactory, UnityServiceScopeBootstrapFactory>();
+            container.RegisterType<IServiceScopeFactory, UnityServiceScopeFactory>();
 
-            var aggregateTypes = GetAggregateTypes(services);
+            var aggregateTypes = GetAggregateTypes(descriptors);
 
             var registerInstance = RegisterInstance();
 
-            foreach (var serviceDescriptor in services)
+            foreach (var serviceDescriptor in descriptors)
             {
                 //System.Diagnostics.Debugger.Break(); 
                 RegisterType(container, serviceDescriptor, aggregateTypes, registerInstance);
@@ -37,10 +37,10 @@ namespace DS.Unity.Extensions.DependencyInjection
             return miRegisterInstanceOpen;
         }
 
-        private static HashSet<Type> GetAggregateTypes(IServiceCollection services)
+        private static HashSet<Type> GetAggregateTypes(IEnumerable<ServiceDescriptor> descriptors)
         {
             var aggregateTypes = new HashSet<Type>(
-                services
+                descriptors
                     .GroupBy(serviceDescriptor => serviceDescriptor.ServiceType, serviceDescriptor => serviceDescriptor)
                     .Where(typeGrouping => typeGrouping.Count() > 1)
                     .Select(type => type.Key)

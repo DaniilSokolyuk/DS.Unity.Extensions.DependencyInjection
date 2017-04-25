@@ -51,8 +51,6 @@ namespace DS.Unity.Extensions.DependencyInjection
             var typeWrapper = typeof(Lazy<T>);
 
             return ResolveAll(container, typeToBuild, typeWrapper).OfType<Lazy<T>>().ToList();
-
-            ;
         }
 
         private static object ResolveEnumerable<T>(IBuilderContext context)

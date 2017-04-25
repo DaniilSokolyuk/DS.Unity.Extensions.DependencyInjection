@@ -3,18 +3,18 @@ using Microsoft.Practices.Unity;
 
 namespace DS.Unity.Extensions.DependencyInjection
 {
-    public class UnityServiceScopeBootstrapFactory : IServiceScopeFactory
+    public class UnityServiceScopeFactory : IServiceScopeFactory
     {
         private readonly IUnityContainer _container;
 
-        public UnityServiceScopeBootstrapFactory(IUnityContainer container)
+        public UnityServiceScopeFactory(IUnityContainer container)
         {
             _container = container;
         }
 
         public IServiceScope CreateScope()
         {
-            return new UnityServiceScopeBootstrap(CreateChildContainer());
+            return new UnityServiceScope(CreateChildContainer());
         }
 
         private IUnityContainer CreateChildContainer()
