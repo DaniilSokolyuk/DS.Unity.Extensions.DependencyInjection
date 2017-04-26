@@ -31,9 +31,8 @@ namespace DS.Unity.Extensions.DependencyInjection
         private static MethodInfo RegisterInstance()
         {
             var miRegisterInstanceOpen =
-                typeof(UnityContainerExtensions).
-                    GetMethods(BindingFlags.Static | BindingFlags.Public).
-                    Single(mi => (mi.Name == "RegisterInstance") && mi.IsGenericMethod && (mi.GetParameters().Length == 4));
+                typeof(UnityContainerExtensions).GetMethods(BindingFlags.Static | BindingFlags.Public)
+                    .Single(mi => (mi.Name == "RegisterInstance") && mi.IsGenericMethod && (mi.GetParameters().Length == 4));
             return miRegisterInstanceOpen;
         }
 
@@ -69,20 +68,19 @@ namespace DS.Unity.Extensions.DependencyInjection
             ICollection<Type> aggregateTypes,
             MethodInfo miRegisterInstanceOpen)
         {
-            var lifetimeManager = GetLifetimeManager(serviceDescriptor.Lifetime);
             var isAggregateType = aggregateTypes.Contains(serviceDescriptor.ServiceType);
 
             if (serviceDescriptor.ImplementationType != null)
             {
-                RegisterImplementation(_container, serviceDescriptor, isAggregateType, lifetimeManager);
+                RegisterImplementation(_container, serviceDescriptor, isAggregateType);
             }
             else if (serviceDescriptor.ImplementationFactory != null)
             {
-                RegisterFactory(_container, serviceDescriptor, isAggregateType, lifetimeManager);
+                RegisterFactory(_container, serviceDescriptor, isAggregateType);
             }
             else if (serviceDescriptor.ImplementationInstance != null)
             {
-                RegisterSingleton(_container, serviceDescriptor, miRegisterInstanceOpen, isAggregateType, lifetimeManager);
+                RegisterSingleton(_container, serviceDescriptor, miRegisterInstanceOpen, isAggregateType);
             }
             else
             {
@@ -93,8 +91,7 @@ namespace DS.Unity.Extensions.DependencyInjection
         private static void RegisterImplementation(
             IUnityContainer _container,
             ServiceDescriptor serviceDescriptor,
-            bool isAggregateType,
-            LifetimeManager lifetimeManager)
+            bool isAggregateType)
         {
             if (isAggregateType)
             {
@@ -102,29 +99,26 @@ namespace DS.Unity.Extensions.DependencyInjection
                     serviceDescriptor.ServiceType,
                     serviceDescriptor.ImplementationType,
                     serviceDescriptor.ImplementationType.AssemblyQualifiedName,
-                    lifetimeManager);
+                    GetLifetimeManager(serviceDescriptor.Lifetime));
             }
-            else
-            {
-                _container.RegisterType(
-                    serviceDescriptor.ServiceType,
-                    serviceDescriptor.ImplementationType,
-                    lifetimeManager);
-            }
+
+            _container.RegisterType(
+                serviceDescriptor.ServiceType,
+                serviceDescriptor.ImplementationType,
+                GetLifetimeManager(serviceDescriptor.Lifetime));
         }
 
         private static void RegisterFactory(
             IUnityContainer _container,
             ServiceDescriptor serviceDescriptor,
-            bool isAggregateType,
-            LifetimeManager lifetimeManager)
+            bool isAggregateType)
         {
             if (isAggregateType)
             {
                 _container.RegisterType(
                     serviceDescriptor.ServiceType,
                     serviceDescriptor.ImplementationType.AssemblyQualifiedName,
-                    lifetimeManager,
+                    GetLifetimeManager(serviceDescriptor.Lifetime),
                     new InjectionFactory(
                         container =>
                         {
@@ -133,27 +127,24 @@ namespace DS.Unity.Extensions.DependencyInjection
                             return instance;
                         }));
             }
-            else
-            {
-                _container.RegisterType(
-                    serviceDescriptor.ServiceType,
-                    lifetimeManager,
-                    new InjectionFactory(
-                        container =>
-                        {
-                            var serviceProvider = container.Resolve<IServiceProvider>();
-                            var instance = serviceDescriptor.ImplementationFactory(serviceProvider);
-                            return instance;
-                        }));
-            }
+
+            _container.RegisterType(
+                serviceDescriptor.ServiceType,
+                GetLifetimeManager(serviceDescriptor.Lifetime),
+                new InjectionFactory(
+                    container =>
+                    {
+                        var serviceProvider = container.Resolve<IServiceProvider>();
+                        var instance = serviceDescriptor.ImplementationFactory(serviceProvider);
+                        return instance;
+                    }));
         }
 
         private static void RegisterSingleton(
             IUnityContainer _container,
             ServiceDescriptor serviceDescriptor,
             MethodInfo miRegisterInstanceOpen,
-            bool isAggregateType,
-            LifetimeManager lifetimeManager)
+            bool isAggregateType)
         {
             if (isAggregateType)
             {
@@ -168,23 +159,22 @@ namespace DS.Unity.Extensions.DependencyInjection
                     implementationType = serviceDescriptor.ImplementationInstance.GetType();
                 }
 
-                miRegisterInstanceOpen.
-                    MakeGenericMethod(serviceDescriptor.ServiceType).
-                    Invoke(
+                miRegisterInstanceOpen.MakeGenericMethod(serviceDescriptor.ServiceType)
+                    .Invoke(
                         null,
                         new[]
                         {
-                            _container, implementationType.AssemblyQualifiedName,
-                            serviceDescriptor.ImplementationInstance, lifetimeManager
+                            _container,
+                            implementationType.AssemblyQualifiedName,
+                            serviceDescriptor.ImplementationInstance,
+                            GetLifetimeManager(serviceDescriptor.Lifetime)
                         });
             }
-            else
-            {
-                _container.RegisterInstance(
-                    serviceDescriptor.ServiceType,
-                    serviceDescriptor.ImplementationInstance,
-                    lifetimeManager);
-            }
+
+            _container.RegisterInstance(
+                serviceDescriptor.ServiceType,
+                serviceDescriptor.ImplementationInstance,
+                GetLifetimeManager(serviceDescriptor.Lifetime));
         }
     }
 }

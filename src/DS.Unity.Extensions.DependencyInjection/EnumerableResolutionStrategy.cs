@@ -20,12 +20,12 @@ namespace DS.Unity.Extensions.DependencyInjection
     {
         private static readonly MethodInfo GenericResolveEnumerableMethod =
             typeof(EnumerableResolutionStrategy).GetMethod(
-                "ResolveEnumerable",
+                nameof(ResolveEnumerable),
                 BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.DeclaredOnly);
 
         private static readonly MethodInfo GenericResolveLazyEnumerableMethod =
             typeof(EnumerableResolutionStrategy).GetMethod(
-                "ResolveLazyEnumerable",
+                nameof(ResolveLazyEnumerable),
                 BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.DeclaredOnly);
 
         private static Type GetTypeToBuild(Type type)
@@ -71,7 +71,8 @@ namespace DS.Unity.Extensions.DependencyInjection
                 names = names.Concat(GetRegisteredNames(container, type.GetGenericTypeDefinition()));
             }
 
-            return names.Distinct()
+            return names.GroupBy(t => t.MappedToType)
+                .Select(t => t.First())
                 .Select(t => t.Name)
                 .Select(name => container.Resolve(typeWrapper, name));
         }

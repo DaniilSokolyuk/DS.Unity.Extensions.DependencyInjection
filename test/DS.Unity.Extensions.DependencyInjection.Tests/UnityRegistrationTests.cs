@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Specification.Fakes;
@@ -75,19 +76,6 @@ namespace DS.Unity.Extensions.DependencyInjection.Tests
             container.Populate(new ServiceDescriptor[] { descriptor });
 
             container.AssertLifetime<IService, HierarchicalLifetimeManager>();
-        }
-
-        [Test]
-        public void LastServiceReplacesPreviousServices()
-        {
-            var container = new UnityContainer();
-            var collection = new ServiceCollection();
-            collection.AddTransient<IFakeMultipleService, FakeOneMultipleService>();
-            collection.AddTransient<IFakeMultipleService, FakeTwoMultipleService>();
-
-            container.Populate(collection);
-
-            container.AssertImplementation<IFakeMultipleService, FakeTwoMultipleService>();
         }
 
         [Test]
