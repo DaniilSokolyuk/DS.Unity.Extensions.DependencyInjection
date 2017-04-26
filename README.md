@@ -17,7 +17,7 @@ You can get started with `DS.Unity.Extensions.DependencyInjection` by [grabbing 
 ```C#
 public IServiceProvider ConfigureServices(IServiceCollection services)
 {
-  services.AddMvc().AddDataAnnotationsLocalization(x => { });
+  services.AddMvc();
   services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
   services.TryAddSingleton<IActionContextAccessor, ActionContextAccessor>();
 

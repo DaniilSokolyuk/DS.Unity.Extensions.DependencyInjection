@@ -20,7 +20,7 @@ namespace DS.Unity.Extensions.DependencyInjection
         private IUnityContainer CreateChildContainer()
         {
             var child = _container.CreateChildContainer();
-            child.AddExtension(new EnumerableExtension());
+            child.AddExtension(new EnumerableResolutionUnityExtension());
 
             return child;
         }

@@ -10,7 +10,7 @@ namespace DS.Unity.Extensions.DependencyInjection
     {
         public static void Populate(this IUnityContainer container, IEnumerable<ServiceDescriptor> descriptors)
         {
-            container.AddExtension(new EnumerableExtension());
+            container.AddExtension(new EnumerableResolutionUnityExtension());
 
             container.RegisterInstance(descriptors);
             container.RegisterType<IServiceProvider, UnityServiceProvider>();
@@ -28,7 +28,7 @@ namespace DS.Unity.Extensions.DependencyInjection
         }
 
         [SuppressMessage("Microsoft.Design", "CA1004:GenericMethodsShouldProvideTypeParameter")]
-        public static T TryResolve<T>(this IUnityContainer container)
+        internal static T TryResolve<T>(this IUnityContainer container)
         {
             var result = TryResolve(container, typeof(T));
 
@@ -41,7 +41,7 @@ namespace DS.Unity.Extensions.DependencyInjection
         }
 
         [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
-        public static object TryResolve(this IUnityContainer container, Type typeToResolve)
+        internal static object TryResolve(this IUnityContainer container, Type typeToResolve)
         {
             try
             {
@@ -54,7 +54,7 @@ namespace DS.Unity.Extensions.DependencyInjection
         }
 
         [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
-        public static object TryResolve(this IUnityContainer container, Type typeToResolve, string name)
+        internal static object TryResolve(this IUnityContainer container, Type typeToResolve, string name)
         {
             try
             {

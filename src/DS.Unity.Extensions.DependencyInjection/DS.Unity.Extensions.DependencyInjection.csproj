@@ -2,9 +2,10 @@
 
   <PropertyGroup>
     <Description>Unity implementation of the interfaces in Microsoft.Extensions.DependencyInjection.Abstractions.</Description>
-    <VersionPrefix>0.1.0</VersionPrefix>
+    <VersionPrefix>0.1.1</VersionPrefix>
     <TargetFramework>net451</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Product>Unity.Extensions.DependencyInjection</Product>
     <AssemblyName>DS.Unity.Extensions.DependencyInjection</AssemblyName>
     <PackageId>DS.Unity.Extensions.DependencyInjection</PackageId>
     <PackageTags>unity;di;ioc;dependencyinjection;aspnet;aspnetcore</PackageTags>
@@ -12,9 +13,11 @@
     <PackageLicenseUrl>http://www.opensource.org/licenses/mit-license.php</PackageLicenseUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/DaniilSokolyuk/DS.Unity.Extensions.DependencyInjection</RepositoryUrl>
+    <Authors>Daniil Sokolyuk</Authors>
+    <NoWarn>1701;1702;1705;1591</NoWarn>
   </PropertyGroup>
 
-    <ItemGroup>
+  <ItemGroup>
       <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="1.1.0" />
       <PackageReference Include="Unity" Version="4.0.1" />
 	</ItemGroup>

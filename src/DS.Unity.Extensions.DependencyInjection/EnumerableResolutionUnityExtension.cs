@@ -4,10 +4,19 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.Practices.ObjectBuilder2;
 using Microsoft.Practices.Unity;
+using Microsoft.Practices.Unity.ObjectBuilder;
 using Microsoft.Practices.Unity.Utility;
 
 namespace DS.Unity.Extensions.DependencyInjection
 {
+    internal class EnumerableResolutionUnityExtension : UnityContainerExtension
+    {
+        protected override void Initialize()
+        {
+            Context.Strategies.AddNew<EnumerableResolutionStrategy>(UnityBuildStage.TypeMapping);
+        }
+    }
+
     /// <summary>
     ///     This strategy implements the logic that will return all instances
     ///     when an <see cref="IEnumerable{T}" /> parameter is detected.
@@ -16,7 +25,7 @@ namespace DS.Unity.Extensions.DependencyInjection
     ///     Nicked from
     ///     https://piotr-wlodek-code-gallery.googlecode.com/svn-history/r40/trunk/Unity.Extensions/Unity.Extensions/EnumerableResolutionStrategy.cs
     /// </remarks>
-    public class EnumerableResolutionStrategy : BuilderStrategy
+    internal class EnumerableResolutionStrategy : BuilderStrategy
     {
         private static readonly MethodInfo GenericResolveEnumerableMethod =
             typeof(EnumerableResolutionStrategy).GetMethod(
@@ -71,10 +80,11 @@ namespace DS.Unity.Extensions.DependencyInjection
                 names = names.Concat(GetRegisteredNames(container, type.GetGenericTypeDefinition()));
             }
 
-            return names.GroupBy(t => t.MappedToType)
+            return names
+                .GroupBy(t => t.MappedToType)
                 .Select(t => t.First())
                 .Select(t => t.Name)
-                .Select(name => container.Resolve(typeWrapper, name));
+                .Select(name => container.TryResolve(typeWrapper, name));
         }
 
         private static IEnumerable<ContainerRegistration> GetRegisteredNames(IUnityContainer container, Type type)

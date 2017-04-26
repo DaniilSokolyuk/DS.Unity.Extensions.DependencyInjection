@@ -4,7 +4,7 @@ using NUnit.Framework;
 
 namespace DS.Unity.Extensions.DependencyInjection.Tests
 {
-    internal static class Assertions
+    internal static class UnityContainerAssertionsExtensions
     {
         public static void AssertRegistered<TService>(this IUnityContainer context)
         {

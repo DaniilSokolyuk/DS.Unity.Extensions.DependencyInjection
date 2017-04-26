@@ -7,7 +7,7 @@ using Microsoft.Practices.Unity;
 
 namespace DS.Unity.Extensions.DependencyInjection
 {
-    public static class UnityBootstrapHelper
+    internal static class UnityBootstrapHelper
     {
         public static void RegisterType(
             IUnityContainer _container,

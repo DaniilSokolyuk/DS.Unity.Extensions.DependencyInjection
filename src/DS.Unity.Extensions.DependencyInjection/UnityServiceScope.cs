@@ -4,7 +4,7 @@ using Microsoft.Practices.Unity;
 
 namespace DS.Unity.Extensions.DependencyInjection
 {
-    public class UnityServiceScope : IServiceScope
+    internal class UnityServiceScope : IServiceScope
     {
         private readonly IUnityContainer _container;
 
