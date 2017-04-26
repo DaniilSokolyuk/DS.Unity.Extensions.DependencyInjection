@@ -1,4 +1,5 @@
 ﻿using System;
+using DS.Unity.Extensions.DependencyInjection.Sample.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -32,6 +33,8 @@ namespace DS.Unity.Extensions.DependencyInjection.Sample
             services.TryAddSingleton<IActionContextAccessor, ActionContextAccessor>();
 
             var container = new UnityContainer();
+            container.RegisterType<IEchoService, EchoService>();
+
             container.Populate(services);
             return new UnityServiceProvider(container);
         }
