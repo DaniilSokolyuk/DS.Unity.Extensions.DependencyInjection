@@ -3,7 +3,7 @@ using Microsoft.Practices.Unity;
 
 namespace DS.Unity.Extensions.DependencyInjection
 {
-    public class UnityServiceScopeFactory : IServiceScopeFactory
+    internal class UnityServiceScopeFactory : IServiceScopeFactory
     {
         private readonly IUnityContainer _container;
 

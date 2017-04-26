@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Specification.Fakes;
 using Microsoft.Extensions.Options;
 using Microsoft.Practices.Unity;
 using NUnit.Framework;
@@ -13,100 +11,75 @@ namespace DS.Unity.Extensions.DependencyInjection.Tests
     public class UnityRegistrationTests
     {
         [Test]
-        public void PopulateRegistersServiceProvider()
+        [TestCase(typeof(IServiceProvider), typeof(UnityServiceProvider))]
+        [TestCase(typeof(IServiceScopeFactory), typeof(UnityServiceScopeFactory))]
+        public void Populate_ShouldRegisterUnityServiceProvider(Type registeredType, Type expectedImplementationType)
         {
+            // given
             var container = new UnityContainer();
+
+            // when
             container.Populate(Enumerable.Empty<ServiceDescriptor>());
 
-            container.AssertRegistered<IServiceProvider>();
+            // then
+            var service = container.Resolve(registeredType);
+            Assert.That(service, Is.AssignableFrom(expectedImplementationType));
         }
 
         [Test]
-        public void CorrectServiceProviderIsRegistered()
+        [TestCase(ServiceLifetime.Transient, typeof(TransientLifetimeManager))]
+        [TestCase(ServiceLifetime.Singleton, typeof(ContainerControlledLifetimeManager))]
+        [TestCase(ServiceLifetime.Scoped, typeof(HierarchicalLifetimeManager))]
+        public void Populate_ShouldRegisterWithTransientLifetime(ServiceLifetime lifetime, Type expectedUnityLifetime)
         {
+            // given
             var container = new UnityContainer();
-            container.Populate(Enumerable.Empty<ServiceDescriptor>());
+            var descriptor = new ServiceDescriptor(typeof(ISomeService), typeof(SomeService), lifetime);
 
-            container.AssertImplementation<IServiceProvider, UnityServiceProvider>();
+            // when
+            container.Populate(new[] { descriptor });
+
+            // then
+            var registration = container.Registrations.FirstOrDefault(p => p.RegisteredType == typeof(ISomeService));
+            Assert.That(registration.LifetimeManagerType, Is.EqualTo(expectedUnityLifetime));
         }
 
         [Test]
-        public void PopulateRegistersServiceScopeFactory()
+        public void Populate_ShouldCorrectlyRegisterOptions()
         {
-            var container = new UnityContainer();
-            container.Populate(Enumerable.Empty<ServiceDescriptor>());
-
-            container.AssertRegistered<IServiceScopeFactory>();
-        }
-
-        [Test]
-        public void ServiceScopeFactoryIsRegistered()
-        {
-            var container = new UnityContainer();
-            container.Populate(Enumerable.Empty<ServiceDescriptor>());
-
-            container.AssertImplementation<IServiceScopeFactory, UnityServiceScopeFactory>();
-        }
-
-        [Test]
-        public void CanRegisterTransientService()
-        {
-            var container = new UnityContainer();
-            var descriptor = new ServiceDescriptor(typeof(IService), typeof(Service), ServiceLifetime.Transient);
-            container.Populate(new ServiceDescriptor[] { descriptor });
-
-            container.AssertLifetime<IService, TransientLifetimeManager>();
-        }
-
-        [Test]
-        public void CanRegisterSingletonService()
-        {
-            var container = new UnityContainer();
-            var descriptor = new ServiceDescriptor(typeof(IService), typeof(Service), ServiceLifetime.Singleton);
-            container.Populate(new ServiceDescriptor[] { descriptor });
-
-            container.AssertLifetime<IService, ContainerControlledLifetimeManager>();
-        }
-
-        [Test]
-        public void CanRegisterScopedService()
-        {
-            var container = new UnityContainer();
-            var descriptor = new ServiceDescriptor(typeof(IService), typeof(Service), ServiceLifetime.Scoped);
-            container.Populate(new ServiceDescriptor[] { descriptor });
-
-            container.AssertLifetime<IService, HierarchicalLifetimeManager>();
-        }
-
-        [Test]
-        public void ServiceCollectionConfigurationIsRetainedInRootContainer()
-        {
+            // given
             var collection = new ServiceCollection();
             collection.AddOptions();
-            collection.Configure<TestOptions>(options =>
-            {
-                options.Value = 5;
-            });
+
+            TestOptions expectedOptions = null;
+
+            collection.Configure<TestOptions>(
+                options =>
+                {
+                    expectedOptions = options; 
+                });
 
             var container = new UnityContainer();
+
+            // when
             container.Populate(collection);
 
-            var resolved = container.Resolve<IOptions<TestOptions>>();
-            Assert.NotNull(resolved.Value);
-            Assert.AreEqual(5, resolved.Value.Value);
+            // then
+            var resolvedOptions = container.Resolve<IOptions<TestOptions>>().Value;
+            Assert.That(resolvedOptions, Is.SameAs(expectedOptions));
         }
 
-        public class Service : IService
+        public class SomeService : ISomeService
         {
         }
 
-        public interface IService
+        public interface ISomeService
         {
         }
 
         public class TestOptions
         {
-            public int Value { get; set; }
+            public int TestSetting { get; set; }
         }
     }
 }
