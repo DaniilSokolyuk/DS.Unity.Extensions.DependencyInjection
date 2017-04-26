@@ -16,8 +16,6 @@ namespace DS.Unity.Extensions.DependencyInjection
         public object GetService(Type serviceType)
         {
             return _container.TryResolve(serviceType);
-
-            ;
         }
 
         public object GetRequiredService(Type serviceType)
