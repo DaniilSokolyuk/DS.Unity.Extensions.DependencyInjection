@@ -7,62 +7,9 @@ using Microsoft.Practices.Unity;
 
 namespace DS.Unity.Extensions.DependencyInjection
 {
-    public static class UnityBootstrapper
+    public static class UnityBootstrapHelper
     {
-        public static void Populate(this IUnityContainer container, IEnumerable<ServiceDescriptor> descriptors)
-        {
-            container.AddExtension(new EnumerableExtension());
-
-            container.RegisterInstance(descriptors);
-            container.RegisterType<IServiceProvider, UnityServiceProvider>();
-            container.RegisterType<IServiceScopeFactory, UnityServiceScopeFactory>();
-
-            var aggregateTypes = GetAggregateTypes(descriptors);
-
-            var registerInstance = RegisterInstance();
-
-            foreach (var serviceDescriptor in descriptors)
-            {
-                //System.Diagnostics.Debugger.Break(); 
-                RegisterType(container, serviceDescriptor, aggregateTypes, registerInstance);
-            }
-        }
-
-        private static MethodInfo RegisterInstance()
-        {
-            var miRegisterInstanceOpen =
-                typeof(UnityContainerExtensions).GetMethods(BindingFlags.Static | BindingFlags.Public)
-                    .Single(mi => (mi.Name == "RegisterInstance") && mi.IsGenericMethod && (mi.GetParameters().Length == 4));
-            return miRegisterInstanceOpen;
-        }
-
-        private static HashSet<Type> GetAggregateTypes(IEnumerable<ServiceDescriptor> descriptors)
-        {
-            var aggregateTypes = new HashSet<Type>(
-                descriptors
-                    .GroupBy(serviceDescriptor => serviceDescriptor.ServiceType, serviceDescriptor => serviceDescriptor)
-                    .Where(typeGrouping => typeGrouping.Count() > 1)
-                    .Select(type => type.Key)
-            );
-            return aggregateTypes;
-        }
-
-        private static LifetimeManager GetLifetimeManager(ServiceLifetime lifecycle)
-        {
-            switch (lifecycle)
-            {
-                case ServiceLifetime.Transient:
-                    return new TransientLifetimeManager();
-                case ServiceLifetime.Singleton:
-                    return new ContainerControlledLifetimeManager();
-                case ServiceLifetime.Scoped:
-                    return new HierarchicalLifetimeManager();
-            }
-
-            return new TransientLifetimeManager();
-        }
-
-        private static void RegisterType(
+        public static void RegisterType(
             IUnityContainer _container,
             ServiceDescriptor serviceDescriptor,
             ICollection<Type> aggregateTypes,
@@ -86,6 +33,40 @@ namespace DS.Unity.Extensions.DependencyInjection
             {
                 throw new InvalidOperationException("Unsupported registration type");
             }
+        }
+
+        public static MethodInfo RegisterInstance()
+        {
+            var miRegisterInstanceOpen =
+                typeof(UnityContainerExtensions).GetMethods(BindingFlags.Static | BindingFlags.Public)
+                    .Single(mi => (mi.Name == "RegisterInstance") && mi.IsGenericMethod && (mi.GetParameters().Length == 4));
+            return miRegisterInstanceOpen;
+        }
+
+        public static HashSet<Type> GetAggregateTypes(IEnumerable<ServiceDescriptor> descriptors)
+        {
+            var aggregateTypes = new HashSet<Type>(
+                descriptors
+                    .GroupBy(serviceDescriptor => serviceDescriptor.ServiceType, serviceDescriptor => serviceDescriptor)
+                    .Where(typeGrouping => typeGrouping.Count() > 1)
+                    .Select(type => type.Key)
+            );
+            return aggregateTypes;
+        }
+
+        private static LifetimeManager GetLifetimeManager(ServiceLifetime lifecycle)
+        {
+            switch (lifecycle)
+            {
+                case ServiceLifetime.Transient:
+                    return new TransientLifetimeManager();
+                case ServiceLifetime.Singleton:
+                    return new ContainerControlledLifetimeManager();
+                case ServiceLifetime.Scoped:
+                    return new HierarchicalLifetimeManager();
+            }
+
+            return new TransientLifetimeManager();
         }
 
         private static void RegisterImplementation(

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <Description>Unity implementation of the interfaces in Microsoft.Extensions.DependencyInjection.Abstractions.</Description>
-    <VersionPrefix>0.0.1</VersionPrefix>
+    <VersionPrefix>0.1.0</VersionPrefix>
     <TargetFramework>net451</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>DS.Unity.Extensions.DependencyInjection</AssemblyName>

@@ -1,11 +1,32 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Practices.Unity;
 
 namespace DS.Unity.Extensions.DependencyInjection
 {
     public static class UnityContainerUserExtensions
     {
+        public static void Populate(this IUnityContainer container, IEnumerable<ServiceDescriptor> descriptors)
+        {
+            container.AddExtension(new EnumerableExtension());
+
+            container.RegisterInstance(descriptors);
+            container.RegisterType<IServiceProvider, UnityServiceProvider>();
+            container.RegisterType<IServiceScopeFactory, UnityServiceScopeFactory>();
+
+            var aggregateTypes = UnityBootstrapHelper.GetAggregateTypes(descriptors);
+
+            var registerInstance = UnityBootstrapHelper.RegisterInstance();
+
+            foreach (var serviceDescriptor in descriptors)
+            {
+                //System.Diagnostics.Debugger.Break(); 
+                UnityBootstrapHelper.RegisterType(container, serviceDescriptor, aggregateTypes, registerInstance);
+            }
+        }
+
         [SuppressMessage("Microsoft.Design", "CA1004:GenericMethodsShouldProvideTypeParameter")]
         public static T TryResolve<T>(this IUnityContainer container)
         {
