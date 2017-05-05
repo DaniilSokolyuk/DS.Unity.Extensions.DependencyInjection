@@ -9,6 +9,7 @@ namespace DS.Unity.Extensions.DependencyInjection.Sample
         {
             var host = new WebHostBuilder()
                 .UseKestrel()
+                .ConfigureServices(services => services.AddUnity())
                 .UseContentRoot(Directory.GetCurrentDirectory())
                 .UseIISIntegration()
                 .UseStartup<Startup>()

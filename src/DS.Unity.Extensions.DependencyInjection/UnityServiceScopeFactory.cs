@@ -1,3 +1,4 @@
+using DS.Unity.Extensions.DependencyInjection.UnityExtensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Practices.Unity;
 
@@ -21,6 +22,7 @@ namespace DS.Unity.Extensions.DependencyInjection
         {
             var child = _container.CreateChildContainer();
             child.AddExtension(new EnumerableResolutionUnityExtension());
+            child.AddExtension(new DerivedTypeResolutionUnityExtension());
 
             return child;
         }

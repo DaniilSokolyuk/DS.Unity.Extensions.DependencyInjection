@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using DS.Unity.Extensions.DependencyInjection.UnityExtensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Practices.Unity;
 
@@ -11,23 +12,126 @@ namespace DS.Unity.Extensions.DependencyInjection
         public static void Populate(this IUnityContainer container, IEnumerable<ServiceDescriptor> descriptors)
         {
             container.AddExtension(new EnumerableResolutionUnityExtension());
+            container.AddExtension(new DerivedTypeResolutionUnityExtension());
 
             container.RegisterInstance(descriptors);
             container.RegisterType<IServiceProvider, UnityServiceProvider>();
             container.RegisterType<IServiceScopeFactory, UnityServiceScopeFactory>();
 
-            var aggregateTypes = UnityBootstrapHelper.GetAggregateTypes(descriptors);
-
-            var registerInstance = UnityBootstrapHelper.RegisterInstance();
+            var aggregateTypes = new HashSet<Type>(
+                descriptors
+                    .GroupBy(serviceDescriptor => serviceDescriptor.ServiceType, serviceDescriptor => serviceDescriptor)
+                    .Where(typeGrouping => typeGrouping.Count() > 1)
+                    .Select(type => type.Key)
+            );
 
             foreach (var serviceDescriptor in descriptors)
             {
-                //System.Diagnostics.Debugger.Break(); 
-                UnityBootstrapHelper.RegisterType(container, serviceDescriptor, aggregateTypes, registerInstance);
+                var isAggregateType = aggregateTypes.Contains(serviceDescriptor.ServiceType);
+
+                if (serviceDescriptor.ImplementationType != null)
+                {
+                    container.RegisterImplementation(serviceDescriptor, isAggregateType);
+                }
+                else if (serviceDescriptor.ImplementationFactory != null)
+                {
+                    container.RegisterFactory(serviceDescriptor, isAggregateType);
+                }
+                else if (serviceDescriptor.ImplementationInstance != null)
+                {
+                    container.RegisterSingleton(serviceDescriptor, isAggregateType);
+                }
+                else
+                {
+                    throw new InvalidOperationException("Unsupported registration type");
+                }
             }
         }
 
-        [SuppressMessage("Microsoft.Design", "CA1004:GenericMethodsShouldProvideTypeParameter")]
+        private static void RegisterImplementation(this IUnityContainer container, ServiceDescriptor serviceDescriptor, bool isAggregateType)
+        {
+            if (isAggregateType)
+            {
+                container.RegisterType(
+                    serviceDescriptor.ServiceType,
+                    serviceDescriptor.ImplementationType,
+                    serviceDescriptor.ImplementationType.AssemblyQualifiedName,
+                    serviceDescriptor.Lifetime.ToUnityLifetimeManager());
+            }
+
+            container.RegisterType(
+                serviceDescriptor.ServiceType,
+                serviceDescriptor.ImplementationType,
+                serviceDescriptor.Lifetime.ToUnityLifetimeManager());
+        }
+
+        private static void RegisterFactory(this IUnityContainer container, ServiceDescriptor serviceDescriptor, bool isAggregateType)
+        {
+            if (isAggregateType)
+            {
+                container.RegisterType(
+                    serviceDescriptor.ServiceType,
+                    serviceDescriptor.ImplementationType.AssemblyQualifiedName,
+                    serviceDescriptor.Lifetime.ToUnityLifetimeManager(),
+                    new InjectionFactory(
+                        unityContainer =>
+                        {
+                            var serviceProvider = unityContainer.Resolve<IServiceProvider>();
+                            var instance = serviceDescriptor.ImplementationFactory(serviceProvider);
+                            return instance;
+                        }));
+            }
+
+            container.RegisterType(
+                serviceDescriptor.ServiceType,
+                serviceDescriptor.Lifetime.ToUnityLifetimeManager(),
+                new InjectionFactory(
+                    unityContainer =>
+                    {
+                        var serviceProvider = unityContainer.Resolve<IServiceProvider>();
+                        var instance = serviceDescriptor.ImplementationFactory(serviceProvider);
+                        return instance;
+                    }));
+        }
+
+        private static void RegisterSingleton(this IUnityContainer container, ServiceDescriptor serviceDescriptor, bool isAggregateType)
+        {
+            if (isAggregateType)
+            {
+                container.RegisterInstance(
+                    serviceDescriptor.ServiceType,
+                    serviceDescriptor.ImplementationType.AssemblyQualifiedName,
+                    serviceDescriptor.ImplementationInstance,
+                    serviceDescriptor.Lifetime.ToUnityLifetimeManager());
+            }
+
+            container.RegisterInstance(
+                serviceDescriptor.ServiceType,
+                serviceDescriptor.ImplementationInstance,
+                serviceDescriptor.Lifetime.ToUnityLifetimeManager());
+        }
+
+        internal static bool CanResolve(this IUnityContainer container, Type type)
+        {
+            if (type.IsClass)
+            {
+                return true;
+            }
+
+            if (type.IsGenericType)
+            {
+                var gerericType = type.GetGenericTypeDefinition();
+                if ((gerericType == typeof(IEnumerable<>)) ||
+                    gerericType.IsClass ||
+                    container.IsRegistered(gerericType))
+                {
+                    return true;
+                }
+            }
+
+            return container.IsRegistered(type);
+        }
+
         internal static T TryResolve<T>(this IUnityContainer container)
         {
             var result = TryResolve(container, typeof(T));
@@ -40,7 +144,6 @@ namespace DS.Unity.Extensions.DependencyInjection
             return default(T);
         }
 
-        [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
         internal static object TryResolve(this IUnityContainer container, Type typeToResolve)
         {
             try
@@ -53,7 +156,6 @@ namespace DS.Unity.Extensions.DependencyInjection
             }
         }
 
-        [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
         internal static object TryResolve(this IUnityContainer container, Type typeToResolve, string name)
         {
             try
