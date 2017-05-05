@@ -1,14 +1,32 @@
-# DS.Unity.Extensions.DependencyInjection
-Unity implementation of the interfaces in Microsoft.Extensions.DependencyInjection.Abstractions
+# DS.Unity.Extensions.DependencyInjection [![NuGet Version](https://buildstats.info/nuget/DS.Unity.Extensions.DependencyInjection)](https://www.nuget.org/packages/DS.Unity.Extensions.DependencyInjection/)
 
-## Get Packages
-
-You can get started with `DS.Unity.Extensions.DependencyInjection` by [grabbing the latest NuGet package](https://www.nuget.org/packages/DS.Unity.Extensions.DependencyInjection).
-
+An unofficial [Unity](https://www.nuget.org/packages/Unity/) implementation of the interfaces in [Microsoft.Extensions.DependencyInjection.Abstractions](https://github.com/aspnet/DependencyInjection) 
 
 ## Get Started
-
 - Reference the `DS.Unity.Extensions.DependencyInjection` package from NuGet.
+
+## First way:
+- In the `WebHostBuilder` add `ConfigureServices(services => services.AddUnity())` method
+
+```C#
+var host = new WebHostBuilder()
+  .UseKestrel()
+  .ConfigureServices(services => services.AddUnity())
+  .UseContentRoot(Directory.GetCurrentDirectory())
+  .UseIISIntegration()
+  .UseStartup<Startup>()
+  .UseApplicationInsights()
+  .Build();
+```
+- Add method to your `Startup` class
+```C#
+public void ConfigureContainer(IUnityContainer container)
+{
+  container.RegisterType<IMyService, MyService>();
+}
+```
+
+## Second way:
 - In the `ConfigureServices` method of your `Startup` class...
   - Register services from the `IServiceCollection`.
   - Build your container.
@@ -18,11 +36,12 @@ You can get started with `DS.Unity.Extensions.DependencyInjection` by [grabbing 
 public IServiceProvider ConfigureServices(IServiceCollection services)
 {
   services.AddMvc();
-  services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-  services.TryAddSingleton<IActionContextAccessor, ActionContextAccessor>();
-
+  
   var container = new UnityContainer();
   container.Populate(services);
+  
+  container.RegisterType<IMyService, MyService>();
+  
   return new UnityServiceProvider(container);
 }
 ```
