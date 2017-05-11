@@ -34,10 +34,12 @@ namespace DS.Unity.Extensions.DependencyInjection.Tests
         {
             // given
             var container = new UnityContainer();
-            var descriptor = new ServiceDescriptor(typeof(ISomeService), typeof(SomeService), lifetime);
+
+            var descriptor1 = new ServiceDescriptor(typeof(ISomeService), typeof(SomeService), lifetime);
+            var descriptor2 = new ServiceDescriptor(typeof(ISomeServiceSingleton), typeof(SomeService), ServiceLifetime.Singleton);
 
             // when
-            container.Populate(new[] { descriptor });
+            container.Populate(new[] { descriptor1, descriptor2 });
 
             // then
             var registration = container.Registrations.FirstOrDefault(p => p.RegisteredType == typeof(ISomeService));
@@ -69,11 +71,15 @@ namespace DS.Unity.Extensions.DependencyInjection.Tests
             Assert.That(resolvedOptions, Is.SameAs(expectedOptions));
         }
 
-        public class SomeService : ISomeService
+        public class SomeService : ISomeService, ISomeServiceSingleton
         {
         }
 
         public interface ISomeService
+        {
+        }
+
+        public interface ISomeServiceSingleton
         {
         }
 

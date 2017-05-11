@@ -7,7 +7,7 @@ using Microsoft.Practices.Unity.ObjectBuilder;
 
 namespace DS.Unity.Extensions.DependencyInjection.UnityExtensions
 {
-    internal class DerivedTypeResolutionUnityExtension : UnityContainerExtension
+    internal class ConstructorSelectionUnityExtension : UnityContainerExtension
     {
         protected override void Initialize()
         {

@@ -11,12 +11,11 @@ namespace DS.Unity.Extensions.DependencyInjection
     {
         public static void Populate(this IUnityContainer container, IEnumerable<ServiceDescriptor> descriptors)
         {
-            container.AddExtension(new EnumerableResolutionUnityExtension());
-            container.AddExtension(new DerivedTypeResolutionUnityExtension());
-
+            container.AddExtensions();
             container.RegisterInstance(descriptors);
             container.RegisterType<IServiceProvider, UnityServiceProvider>();
             container.RegisterType<IServiceScopeFactory, UnityServiceScopeFactory>();
+            container.RegisterType<IServiceScope, UnityServiceScope>();
 
             var aggregateTypes = new HashSet<Type>(
                 descriptors
@@ -98,9 +97,19 @@ namespace DS.Unity.Extensions.DependencyInjection
         {
             if (isAggregateType)
             {
+                var name = Guid.NewGuid().ToString();
+                if (serviceDescriptor.ImplementationType != null)
+                {
+                    name = serviceDescriptor.ImplementationType.AssemblyQualifiedName;
+                }
+                else if (serviceDescriptor.ImplementationInstance != null)
+                {
+                    name = serviceDescriptor.ImplementationInstance.GetType().AssemblyQualifiedName;
+                }
+
                 container.RegisterInstance(
                     serviceDescriptor.ServiceType,
-                    serviceDescriptor.ImplementationType.AssemblyQualifiedName,
+                    name,
                     serviceDescriptor.ImplementationInstance,
                     serviceDescriptor.Lifetime.ToUnityLifetimeManager());
             }
@@ -109,6 +118,15 @@ namespace DS.Unity.Extensions.DependencyInjection
                 serviceDescriptor.ServiceType,
                 serviceDescriptor.ImplementationInstance,
                 serviceDescriptor.Lifetime.ToUnityLifetimeManager());
+        }
+
+        public static IUnityContainer AddExtensions(this IUnityContainer container)
+        {
+            container.AddExtension(new EnumerableResolutionUnityExtension());
+            container.AddExtension(new ConstructorSelectionUnityExtension());
+            container.AddExtension(new DisposeExtension());
+
+            return container;
         }
 
         internal static bool CanResolve(this IUnityContainer container, Type type)
