@@ -124,7 +124,7 @@ namespace DS.Unity.Extensions.DependencyInjection
         {
             container.AddExtension(new EnumerableResolutionUnityExtension());
             container.AddExtension(new ConstructorSelectionUnityExtension());
-            container.AddExtension(new DisposeExtension());
+            //container.AddExtension(new DisposeExtension());
 
             return container;
         }
