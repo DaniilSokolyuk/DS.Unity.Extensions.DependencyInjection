@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Practices.ObjectBuilder2;
 using Microsoft.Practices.Unity;
@@ -9,34 +10,38 @@ namespace DS.Unity.Extensions.DependencyInjection.UnityExtensions
 {
     public class DisposeExtension : UnityContainerExtension, IDisposable
     {
-        private DisposeStrategy strategy = new DisposeStrategy();
+        private DisposeStrategy _strategy = new DisposeStrategy();
 
         protected override void Initialize()
         {
-            Context.Strategies.Add(strategy, UnityBuildStage.TypeMapping);
+            Context.Strategies.Add(_strategy, UnityBuildStage.TypeMapping);
         }
 
         public void Dispose()
         {
-            strategy.Dispose();
-            strategy = null;
+            _strategy.Dispose();
+            _strategy = null;
         }
 
         private class DisposeStrategy : BuilderStrategy, IDisposable
         {
-            private DisposableObjectsList disposables = new DisposableObjectsList();
+            private List<IDisposable> _disposables = new List<IDisposable>();
 
             public override void PostBuildUp(IBuilderContext context)
             {
-                if (context != null)
+                ILifetimePolicy activeLifetime = context.PersistentPolicies.Get<ILifetimePolicy>(context.BuildKey, out IPolicyList lifetimePolicySource);
+
+                IDisposable instance = context.Existing as IDisposable;
+
+                if (instance != null 
+                    && !(activeLifetime is IDisposable && context.Lifetime.Contains(activeLifetime)) // all IDisposable in lifitimemanager dipose when unitycontainer dispose
+                    && !IsControlledByParrent(context)
+                    && !IsInheritedStrategy(context)
+                    && !IsCurrentUnityUnityContainer(context, instance))
                 {
-                    IDisposable instance = context.Existing as IDisposable;
-                    if (instance != null 
-                        && !IsControlledByParrent(context) 
-                        && !IsInheritedStrategy(context)
-                        && !IsCurrentUnityUnityContainer(context, instance))
+                    lock (_disposables)
                     {
-                        disposables.Add(instance);
+                        _disposables.Add(instance);
                     }
                 }
 
@@ -51,8 +56,7 @@ namespace DS.Unity.Extensions.DependencyInjection.UnityExtensions
 
             private bool IsControlledByParrent(IBuilderContext context)
             {
-                IPolicyList lifetimePolicySource;
-                ILifetimePolicy activeLifetime = context.PersistentPolicies.Get<ILifetimePolicy>(context.BuildKey, out lifetimePolicySource);
+                ILifetimePolicy activeLifetime = context.PersistentPolicies.Get<ILifetimePolicy>(context.BuildKey, out IPolicyList lifetimePolicySource);
 
                 return activeLifetime is ContainerControlledLifetimeManager
                        &&
@@ -69,30 +73,15 @@ namespace DS.Unity.Extensions.DependencyInjection.UnityExtensions
 
             public void Dispose()
             {
-                disposables.Dispose();
-                disposables = null;
-            }
-        }
-
-        public class DisposableObjectsList : IDisposable
-        {
-            private ConcurrentBag<WeakReference> items = new ConcurrentBag<WeakReference>();
-
-            public void Add(IDisposable disposable)
-            {
-                items.Add(new WeakReference(disposable));
-            }
-
-            public void Dispose()
-            {
-                foreach (var item in items)
+                lock (_disposables)
                 {
-                    object target = item.Target;
-                    IDisposable disposable = target as IDisposable;
-                    if (disposable != null)
-                        disposable.Dispose();
+                    foreach (var item in _disposables)
+                    {
+                            item.Dispose();
+                    }
+
+                    _disposables.Clear();
                 }
-                items = new ConcurrentBag<WeakReference>();
             }
         }
     }

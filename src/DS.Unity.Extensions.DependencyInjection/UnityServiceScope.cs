@@ -11,7 +11,7 @@ namespace DS.Unity.Extensions.DependencyInjection
         public UnityServiceScope(IUnityContainer container)
         {
             _container = container;
-            ServiceProvider = _container.Resolve<IServiceProvider>();
+            ServiceProvider = new UnityServiceProvider(container);
         }
 
         public IServiceProvider ServiceProvider { get; }
