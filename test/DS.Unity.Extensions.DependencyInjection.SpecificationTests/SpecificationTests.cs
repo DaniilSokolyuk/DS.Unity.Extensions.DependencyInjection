@@ -15,7 +15,7 @@ namespace DS.Unity.Extensions.DependencyInjection.SpecificationTests
 
             container.Populate(serviceCollection);
 
-            return container.Resolve<IServiceProvider>();
+            return new UnityServiceProvider(container);
         }
 
         ////[Fact]
@@ -25,8 +25,8 @@ namespace DS.Unity.Extensions.DependencyInjection.SpecificationTests
         ////    services.AddSingleton<IFakeSingletonService, FakeService>();
         ////    services.AddScoped<IFakeScopedService, FakeService>();
         ////    services.AddTransient<IFakeService, FakeService>();
-        ////    IServiceProvider serviceProvider = CreateServiceProvider(services);
-        ////    FakeService fakeService = Assert.IsType<FakeService>(serviceProvider.GetService<IFakeService>());
+        ////    var serviceProvider = CreateServiceProvider(services);
+        ////    var fakeService = Assert.IsType<FakeService>(serviceProvider.GetService<IFakeService>());
         ////    FakeService service1;
         ////    FakeService service2;
         ////    FakeService service3;
@@ -48,7 +48,10 @@ namespace DS.Unity.Extensions.DependencyInjection.SpecificationTests
         ////    Assert.False(service4.Disposed);
         ////    var disposable = serviceProvider as IDisposable;
         ////    if (disposable == null)
+        ////    {
         ////        return;
+        ////    }
+
         ////    disposable.Dispose();
         ////    Assert.True(service4.Disposed);
         ////    Assert.True(fakeService.Disposed);

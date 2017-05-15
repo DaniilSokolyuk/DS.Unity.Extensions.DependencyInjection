@@ -81,7 +81,7 @@ namespace DS.Unity.Extensions.DependencyInjection.UnityExtensions
 
                 return names
                     .GroupBy(t => t.MappedToType)
-                    .Select(t => t.First())
+                    .Select(t => t.Last())
                     .Select(t => t.Name)
                     .Select(name => container.TryResolve(typeWrapper, name))
                     .Where(x => x != null);

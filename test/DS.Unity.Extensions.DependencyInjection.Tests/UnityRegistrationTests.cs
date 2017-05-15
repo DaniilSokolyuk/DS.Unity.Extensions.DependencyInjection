@@ -11,6 +11,28 @@ namespace DS.Unity.Extensions.DependencyInjection.Tests
     public class UnityRegistrationTests
     {
         [Test]
+        public void Populate_ShouldCorrectlyRegisterOptions()
+        {
+            // given
+            var collection = new ServiceCollection();
+            collection.AddOptions();
+
+            TestOptions expectedOptions = null;
+
+            collection.Configure<TestOptions>(
+                options => { expectedOptions = options; });
+
+            var container = new UnityContainer();
+
+            // when
+            container.Populate(collection);
+
+            // then
+            var resolvedOptions = container.Resolve<IOptions<TestOptions>>().Value;
+            Assert.That(resolvedOptions, Is.SameAs(expectedOptions));
+        }
+
+        [Test]
         [TestCase(typeof(IServiceProvider), typeof(UnityServiceProvider))]
         [TestCase(typeof(IServiceScopeFactory), typeof(UnityServiceScopeFactory))]
         public void Populate_ShouldRegisterUnityServiceProvider(Type registeredType, Type expectedImplementationType)
@@ -44,31 +66,6 @@ namespace DS.Unity.Extensions.DependencyInjection.Tests
             // then
             var registration = container.Registrations.FirstOrDefault(p => p.RegisteredType == typeof(ISomeService));
             Assert.That(registration.LifetimeManagerType, Is.EqualTo(expectedUnityLifetime));
-        }
-
-        [Test]
-        public void Populate_ShouldCorrectlyRegisterOptions()
-        {
-            // given
-            var collection = new ServiceCollection();
-            collection.AddOptions();
-
-            TestOptions expectedOptions = null;
-
-            collection.Configure<TestOptions>(
-                options =>
-                {
-                    expectedOptions = options; 
-                });
-
-            var container = new UnityContainer();
-
-            // when
-            container.Populate(collection);
-
-            // then
-            var resolvedOptions = container.Resolve<IOptions<TestOptions>>().Value;
-            Assert.That(resolvedOptions, Is.SameAs(expectedOptions));
         }
 
         public class SomeService : ISomeService, ISomeServiceSingleton

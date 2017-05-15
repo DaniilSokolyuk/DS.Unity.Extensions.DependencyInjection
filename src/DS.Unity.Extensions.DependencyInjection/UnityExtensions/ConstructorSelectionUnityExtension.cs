@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Practices.ObjectBuilder2;
@@ -56,48 +55,29 @@ namespace DS.Unity.Extensions.DependencyInjection.UnityExtensions
                         return originalConstructor;
                     }
 
-                    var newSelectedConstructor = FindNewCtor(originalConstructor);
-                    if (newSelectedConstructor == null)
+                    var implementingType = originalConstructor.Constructor.DeclaringType;
+                    var bestConstructor = implementingType.GetTypeInfo()
+                        .DeclaredConstructors
+                        .Select(ctor => new { Constructor = ctor, Parameters = ctor.GetParameters() })
+                        .OrderByDescending(x => x.Parameters.Length)
+                        .FirstOrDefault(
+                            _ => _.Constructor.IsPublic
+                                 && _.Constructor != originalConstructor.Constructor
+                                 && _.Parameters.All(arg => _container.CanResolve(arg.ParameterType)));
+
+                    if (bestConstructor == null)
                     {
                         return originalConstructor;
                     }
 
-                    foreach (var newParameterResolver in originalConstructor.GetParameterResolvers().Take(newSelectedConstructor.Constructor.GetParameters().Length))
+                    var newSelectedConstructor = new SelectedConstructor(bestConstructor.Constructor);
+
+                    foreach (var newParameterResolver in originalConstructor.GetParameterResolvers().Take(bestConstructor.Parameters.Length))
                     {
                         newSelectedConstructor.AddParameterResolver(newParameterResolver);
                     }
 
                     return newSelectedConstructor;
-                }
-
-                private SelectedConstructor FindNewCtor(SelectedConstructor originalConstructor)
-                {
-                    var implementingType = originalConstructor.Constructor.DeclaringType;
-                    var constructors = implementingType.GetTypeInfo()
-                        .DeclaredConstructors
-                        .Where(constructor => constructor.IsPublic && (constructor != originalConstructor.Constructor))
-                        .ToArray();
-
-                    if (constructors.Length == 0)
-                    {
-                        return null;
-                    }
-
-                    if (constructors.Length == 1)
-                    {
-                        return new SelectedConstructor(constructors[0]);
-                    }
-
-                    var newCtor = constructors
-                        .OrderByDescending(c=>c.GetParameters().Length)
-                        .FirstOrDefault(c => c.GetParameters().All(arg => _container.CanResolve(arg.ParameterType)));
-
-                    if (newCtor == null)
-                    {
-                        return null;
-                    }
-
-                    return new SelectedConstructor(newCtor);
                 }
             }
         }

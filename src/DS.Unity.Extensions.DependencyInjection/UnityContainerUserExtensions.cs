@@ -12,10 +12,8 @@ namespace DS.Unity.Extensions.DependencyInjection
         public static void Populate(this IUnityContainer container, IEnumerable<ServiceDescriptor> descriptors)
         {
             container.AddExtensions();
-            container.RegisterInstance(descriptors);
             container.RegisterType<IServiceProvider, UnityServiceProvider>();
             container.RegisterType<IServiceScopeFactory, UnityServiceScopeFactory>();
-            container.RegisterType<IServiceScope, UnityServiceScope>();
 
             var aggregateTypes = new HashSet<Type>(
                 descriptors
@@ -45,79 +43,6 @@ namespace DS.Unity.Extensions.DependencyInjection
                     throw new InvalidOperationException("Unsupported registration type");
                 }
             }
-        }
-
-        private static void RegisterImplementation(this IUnityContainer container, ServiceDescriptor serviceDescriptor, bool isAggregateType)
-        {
-            if (isAggregateType)
-            {
-                container.RegisterType(
-                    serviceDescriptor.ServiceType,
-                    serviceDescriptor.ImplementationType,
-                    serviceDescriptor.ImplementationType.AssemblyQualifiedName,
-                    serviceDescriptor.Lifetime.ToUnityLifetimeManager());
-            }
-
-            container.RegisterType(
-                serviceDescriptor.ServiceType,
-                serviceDescriptor.ImplementationType,
-                serviceDescriptor.Lifetime.ToUnityLifetimeManager());
-        }
-
-        private static void RegisterFactory(this IUnityContainer container, ServiceDescriptor serviceDescriptor, bool isAggregateType)
-        {
-            if (isAggregateType)
-            {
-                container.RegisterType(
-                    serviceDescriptor.ServiceType,
-                    serviceDescriptor.ImplementationType.AssemblyQualifiedName,
-                    serviceDescriptor.Lifetime.ToUnityLifetimeManager(),
-                    new InjectionFactory(
-                        unityContainer =>
-                        {
-                            var serviceProvider = unityContainer.Resolve<IServiceProvider>();
-                            var instance = serviceDescriptor.ImplementationFactory(serviceProvider);
-                            return instance;
-                        }));
-            }
-
-            container.RegisterType(
-                serviceDescriptor.ServiceType,
-                serviceDescriptor.Lifetime.ToUnityLifetimeManager(),
-                new InjectionFactory(
-                    unityContainer =>
-                    {
-                        var serviceProvider = unityContainer.Resolve<IServiceProvider>();
-                        var instance = serviceDescriptor.ImplementationFactory(serviceProvider);
-                        return instance;
-                    }));
-        }
-
-        private static void RegisterSingleton(this IUnityContainer container, ServiceDescriptor serviceDescriptor, bool isAggregateType)
-        {
-            if (isAggregateType)
-            {
-                var name = Guid.NewGuid().ToString();
-                if (serviceDescriptor.ImplementationType != null)
-                {
-                    name = serviceDescriptor.ImplementationType.AssemblyQualifiedName;
-                }
-                else if (serviceDescriptor.ImplementationInstance != null)
-                {
-                    name = serviceDescriptor.ImplementationInstance.GetType().AssemblyQualifiedName;
-                }
-
-                container.RegisterInstance(
-                    serviceDescriptor.ServiceType,
-                    name,
-                    serviceDescriptor.ImplementationInstance,
-                    serviceDescriptor.Lifetime.ToUnityLifetimeManager());
-            }
-
-            container.RegisterInstance(
-                serviceDescriptor.ServiceType,
-                serviceDescriptor.ImplementationInstance,
-                serviceDescriptor.Lifetime.ToUnityLifetimeManager());
         }
 
         public static IUnityContainer AddExtensions(this IUnityContainer container)
@@ -184,6 +109,79 @@ namespace DS.Unity.Extensions.DependencyInjection
             {
                 return null;
             }
+        }
+
+        private static void RegisterImplementation(this IUnityContainer container, ServiceDescriptor serviceDescriptor, bool isAggregateType)
+        {
+            if (isAggregateType)
+            {
+                container.RegisterType(
+                    serviceDescriptor.ServiceType,
+                    serviceDescriptor.ImplementationType,
+                    serviceDescriptor.ImplementationType.AssemblyQualifiedName,
+                    serviceDescriptor.Lifetime.ToUnityLifetimeManager());
+            }
+
+            container.RegisterType(
+                serviceDescriptor.ServiceType,
+                serviceDescriptor.ImplementationType,
+                serviceDescriptor.Lifetime.ToUnityLifetimeManager());
+        }
+
+        private static void RegisterFactory(this IUnityContainer container, ServiceDescriptor serviceDescriptor, bool isAggregateType)
+        {
+            if (isAggregateType)
+            {
+                container.RegisterType(
+                    serviceDescriptor.ServiceType,
+                    serviceDescriptor.ImplementationType.AssemblyQualifiedName,
+                    serviceDescriptor.Lifetime.ToUnityLifetimeManager(),
+                    new InjectionFactory(
+                        unityContainer =>
+                        {
+                            var serviceProvider = new UnityServiceProvider(unityContainer);
+                            var instance = serviceDescriptor.ImplementationFactory(serviceProvider);
+                            return instance;
+                        }));
+            }
+
+            container.RegisterType(
+                serviceDescriptor.ServiceType,
+                serviceDescriptor.Lifetime.ToUnityLifetimeManager(),
+                new InjectionFactory(
+                    unityContainer =>
+                    {
+                        var serviceProvider = new UnityServiceProvider(unityContainer);
+                        var instance = serviceDescriptor.ImplementationFactory(serviceProvider);
+                        return instance;
+                    }));
+        }
+
+        private static void RegisterSingleton(this IUnityContainer container, ServiceDescriptor serviceDescriptor, bool isAggregateType)
+        {
+            if (isAggregateType)
+            {
+                var name = Guid.NewGuid().ToString();
+                if (serviceDescriptor.ImplementationType != null)
+                {
+                    name = serviceDescriptor.ImplementationType.AssemblyQualifiedName;
+                }
+                else if (serviceDescriptor.ImplementationInstance != null)
+                {
+                    name = serviceDescriptor.ImplementationInstance.GetType().AssemblyQualifiedName;
+                }
+
+                container.RegisterInstance(
+                    serviceDescriptor.ServiceType,
+                    name,
+                    serviceDescriptor.ImplementationInstance,
+                    serviceDescriptor.Lifetime.ToUnityLifetimeManager());
+            }
+
+            container.RegisterInstance(
+                serviceDescriptor.ServiceType,
+                serviceDescriptor.ImplementationInstance,
+                serviceDescriptor.Lifetime.ToUnityLifetimeManager());
         }
     }
 }
