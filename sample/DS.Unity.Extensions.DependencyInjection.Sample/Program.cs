@@ -13,7 +13,6 @@ namespace DS.Unity.Extensions.DependencyInjection.Sample
                 .UseContentRoot(Directory.GetCurrentDirectory())
                 .UseIISIntegration()
                 .UseStartup<Startup>()
-                .UseApplicationInsights()
                 .Build();
 
             host.Run();
