@@ -56,7 +56,7 @@ namespace DS.Unity.Extensions.DependencyInjection
 
         internal static bool CanResolve(this IUnityContainer container, Type type)
         {
-            if (type.IsClass)
+            if (type.IsClass && !type.IsAbstract)
             {
                 return true;
             }

@@ -82,20 +82,9 @@ namespace DS.Unity.Extensions.DependencyInjection.UnityExtensions
 
                     var newSelectedConstructor = new SelectedConstructor(bestConstructor.Constructor);
 
-                    if (originalConstructor != null)
+                    foreach (var parameter in bestConstructor.Constructor.GetParameters())
                     {
-                        foreach (var newParameterResolver in originalConstructor.GetParameterResolvers()
-                            .Take(bestConstructor.Parameters.Length))
-                        {
-                            newSelectedConstructor.AddParameterResolver(newParameterResolver);
-                        }
-                    }
-                    else
-                    {
-                        foreach (var parameter in bestConstructor.Constructor.GetParameters())
-                        {
-                            newSelectedConstructor.AddParameterResolver(new NamedTypeDependencyResolverPolicy(parameter.ParameterType, null));
-                        }
+                        newSelectedConstructor.AddParameterResolver(new NamedTypeDependencyResolverPolicy(parameter.ParameterType, null));
                     }
 
                     return newSelectedConstructor;
