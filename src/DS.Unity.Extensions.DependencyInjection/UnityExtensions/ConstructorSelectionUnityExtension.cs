@@ -1,9 +1,13 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Practices.ObjectBuilder2;
 using Microsoft.Practices.Unity;
 using Microsoft.Practices.Unity.ObjectBuilder;
+using Microsoft.Practices.Unity.Utility;
 
 namespace DS.Unity.Extensions.DependencyInjection.UnityExtensions
 {
@@ -23,11 +27,14 @@ namespace DS.Unity.Extensions.DependencyInjection.UnityExtensions
                     return;
                 }
 
-                var originalSelectorPolicy = context.Policies.Get<IConstructorSelectorPolicy>(context.BuildKey, out IPolicyList selectorPolicyDestination);
+                var originalSelectorPolicy = context.Policies.Get<IConstructorSelectorPolicy>(context.BuildKey, out var selectorPolicyDestination);
 
-                selectorPolicyDestination.Set<IConstructorSelectorPolicy>(
-                    new DerivedTypeConstructorSelectorPolicy(GetUnityFromBuildContext(context), originalSelectorPolicy),
-                    context.BuildKey);
+                if (originalSelectorPolicy.GetType() == typeof(DefaultUnityConstructorSelectorPolicy))
+                {
+                    selectorPolicyDestination.Set<IConstructorSelectorPolicy>(
+                        new DerivedTypeConstructorSelectorPolicy(GetUnityFromBuildContext(context), originalSelectorPolicy),
+                        context.BuildKey);
+                }
             }
 
             private IUnityContainer GetUnityFromBuildContext(IBuilderContext context)
@@ -41,7 +48,8 @@ namespace DS.Unity.Extensions.DependencyInjection.UnityExtensions
                 private readonly IUnityContainer _container;
                 private readonly IConstructorSelectorPolicy _originalConstructorSelectorPolicy;
 
-                public DerivedTypeConstructorSelectorPolicy(IUnityContainer container, IConstructorSelectorPolicy originalSelectorPolicy)
+                public DerivedTypeConstructorSelectorPolicy(IUnityContainer container,
+                    IConstructorSelectorPolicy originalSelectorPolicy)
                 {
                     _originalConstructorSelectorPolicy = originalSelectorPolicy;
                     _container = container;
@@ -49,45 +57,51 @@ namespace DS.Unity.Extensions.DependencyInjection.UnityExtensions
 
                 public SelectedConstructor SelectConstructor(IBuilderContext context, IPolicyList resolverPolicyDestination)
                 {
-                    SelectedConstructor originalConstructor = null;
+                    var type = context.BuildKey.Type;
+                    var ctor = FindInjectionConstructor(type) ?? FindLongestConstructor(type);
+                    return ctor != null ? CreateSelectedConstructor(ctor) : null;
+                }
 
-                    try
+                private SelectedConstructor CreateSelectedConstructor(ConstructorInfo ctor)
+                {
+                    var selectedConstructor = new SelectedConstructor(ctor);
+                    foreach (var parameter in ctor.GetParameters())
                     {
-                        originalConstructor = _originalConstructorSelectorPolicy.SelectConstructor(context, resolverPolicyDestination);
-
-                        if (originalConstructor.Constructor.GetParameters().All(arg => _container.CanResolve(arg.ParameterType)))
-                        {
-                            return originalConstructor;
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e);
+                        selectedConstructor.AddParameterResolver(CreateResolver(parameter));
                     }
 
-                    var implementingType = context.BuildKey.Type;
-                    var bestConstructor = implementingType.GetTypeInfo()
-                        .DeclaredConstructors
-                        .Select(ctor => new { Constructor = ctor, Parameters = ctor.GetParameters() })
+                    return selectedConstructor;
+                }
+
+                private IDependencyResolverPolicy CreateResolver(ParameterInfo parameter)
+                {
+                    var list = parameter.GetCustomAttributes(false).OfType<DependencyResolutionAttribute>().ToList();
+                    return list.Count > 0
+                        ? list[0].CreateResolver(parameter.ParameterType)
+                        : new NamedTypeDependencyResolverPolicy(parameter.ParameterType, null);
+                }
+
+                private ConstructorInfo FindInjectionConstructor(Type typeToConstruct)
+                {
+                    var array = new ReflectionHelper(typeToConstruct).InstanceConstructors.Where(ctor => ctor.IsDefined(typeof(InjectionConstructorAttribute), true)).ToArray();
+                    switch (array.Length)
+                    {
+                        case 0:
+                            return null;
+                        case 1:
+                            return array[0];
+                        default:
+                            throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, "MultipleInjectionConstructors {0}", typeToConstruct.GetTypeInfo().Name));
+                    }
+                }
+
+                private ConstructorInfo FindLongestConstructor(Type typeToConstruct)
+                {
+                    return new ReflectionHelper(typeToConstruct).InstanceConstructors
+                        .Select(ctor => new {Constructor = ctor, Parameters = ctor.GetParameters()})
                         .OrderByDescending(x => x.Parameters.Length)
-                        .FirstOrDefault(
-                            _ => _.Constructor.IsPublic
-                                 && (originalConstructor == null || _.Constructor != originalConstructor.Constructor)
-                                 && _.Parameters.All(arg => _container.CanResolve(arg.ParameterType)));
-
-                    if (bestConstructor == null)
-                    {
-                        return originalConstructor;
-                    }
-
-                    var newSelectedConstructor = new SelectedConstructor(bestConstructor.Constructor);
-
-                    foreach (var parameter in bestConstructor.Constructor.GetParameters())
-                    {
-                        newSelectedConstructor.AddParameterResolver(new NamedTypeDependencyResolverPolicy(parameter.ParameterType, null));
-                    }
-
-                    return newSelectedConstructor;
+                        .FirstOrDefault(_ =>  _.Parameters.All(arg => _container.CanResolve(arg.ParameterType)))
+                        ?.Constructor;
                 }
             }
         }

@@ -1,4 +1,4 @@
-﻿using System.IO;
+﻿using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 
 namespace DS.Unity.Extensions.DependencyInjection.Sample
@@ -7,15 +7,13 @@ namespace DS.Unity.Extensions.DependencyInjection.Sample
     {
         public static void Main(string[] args)
         {
-            var host = new WebHostBuilder()
-                .UseKestrel()
+            BuildWebHost(args).Run();
+        }
+
+        public static IWebHost BuildWebHost(string[] args) =>
+            WebHost.CreateDefaultBuilder(args)
                 .ConfigureServices(services => services.AddUnity())
-                .UseContentRoot(Directory.GetCurrentDirectory())
-                .UseIISIntegration()
                 .UseStartup<Startup>()
                 .Build();
-
-            host.Run();
-        }
     }
 }
