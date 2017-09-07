@@ -134,7 +134,7 @@ namespace DS.Unity.Extensions.DependencyInjection
             {
                 container.RegisterType(
                     serviceDescriptor.ServiceType,
-                    serviceDescriptor.ImplementationType.AssemblyQualifiedName,
+                    serviceDescriptor.ImplementationFactory.GetType().AssemblyQualifiedName,
                     serviceDescriptor.Lifetime.ToUnityLifetimeManager(),
                     new InjectionFactory(
                         unityContainer =>
