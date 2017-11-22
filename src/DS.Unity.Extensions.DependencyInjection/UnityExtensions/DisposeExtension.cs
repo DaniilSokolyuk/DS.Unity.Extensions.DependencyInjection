@@ -62,7 +62,7 @@ namespace DS.Unity.Extensions.DependencyInjection.UnityExtensions
                 bool IsIDisposableInLifetimeContainer()
                 {
                     // all IDisposable in lifitimemanager dipose when unitycontainer dispose
-                    return activeLifetime is IDisposable && context.Lifetime.Contains(activeLifetime);
+                    return activeLifetime is IDisposable && context.Lifetime != null && context.Lifetime.Contains(activeLifetime);
                 }
 
                 bool IsCurrentUnityUnityContainer()
