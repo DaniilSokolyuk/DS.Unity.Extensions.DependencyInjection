@@ -9,14 +9,11 @@ An unofficial [Unity](https://www.nuget.org/packages/Unity/) implementation of t
 - In the `WebHostBuilder` add `ConfigureServices(services => services.AddUnity())` method
 
 ```C#
-var host = new WebHostBuilder()
-  .UseKestrel()
-  .ConfigureServices(services => services.AddUnity())
-  .UseContentRoot(Directory.GetCurrentDirectory())
-  .UseIISIntegration()
-  .UseStartup<Startup>()
-  .UseApplicationInsights()
-  .Build();
+public static IWebHost BuildWebHost(string[] args) =>
+    WebHost.CreateDefaultBuilder(args)
+        .ConfigureServices(services => services.AddUnity())
+        .UseStartup<Startup>()
+        .Build();
 ```
 - Add method to your `Startup` class
 ```C#
