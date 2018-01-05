@@ -1,6 +1,6 @@
 # DS.Unity.Extensions.DependencyInjection [![NuGet Version](https://buildstats.info/nuget/DS.Unity.Extensions.DependencyInjection)](https://www.nuget.org/packages/DS.Unity.Extensions.DependencyInjection/)
 
-An unofficial [Unity 4.0.1](https://www.nuget.org/packages/Unity/) implementation of the interfaces in [Microsoft.Extensions.DependencyInjection.Abstractions](https://github.com/aspnet/DependencyInjection) 
+An unofficial [Unity 4.0.1](https://www.nuget.org/packages/Unity/4.0.1) implementation of the interfaces in [Microsoft.Extensions.DependencyInjection.Abstractions](https://github.com/aspnet/DependencyInjection) 
 
 ## For Unity 5+ please use [official implementation](https://github.com/unitycontainer/microsoft-dependency-injection)
 
