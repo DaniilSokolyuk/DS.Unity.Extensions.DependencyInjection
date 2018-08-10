@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <Description>An unofficial Unity implementation of the interfaces in Microsoft.Extensions.DependencyInjection.Abstractions.</Description>
-    <VersionPrefix>2.0.3</VersionPrefix>
+    <VersionPrefix>2.0.3.1</VersionPrefix>
     <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Product>Unity.Extensions.DependencyInjection</Product>
