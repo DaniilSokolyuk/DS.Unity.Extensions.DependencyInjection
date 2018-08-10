@@ -100,7 +100,7 @@ namespace DS.Unity.Extensions.DependencyInjection.UnityExtensions
                     return new ReflectionHelper(typeToConstruct).InstanceConstructors
                         .Select(ctor => new {Constructor = ctor, Parameters = ctor.GetParameters()})
                         .OrderByDescending(x => x.Parameters.Length)
-                        .FirstOrDefault(_ => _.Parameters.All(arg => _container.CanResolve(arg.ParameterType)))
+                        .FirstOrDefault(_ => _.Parameters.All(arg => _container.CanResolve(arg)))
                         ?.Constructor;
                 }
             }

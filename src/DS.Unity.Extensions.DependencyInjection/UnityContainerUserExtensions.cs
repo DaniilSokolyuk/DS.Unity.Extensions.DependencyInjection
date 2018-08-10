@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using DS.Unity.Extensions.DependencyInjection.UnityExtensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Practices.Unity;
@@ -54,25 +55,43 @@ namespace DS.Unity.Extensions.DependencyInjection
             return container;
         }
 
-        internal static bool CanResolve(this IUnityContainer container, Type type)
+        internal static bool CanResolve(this IUnityContainer container, ParameterInfo arg)
         {
-            if (type.IsClass && !type.IsAbstract)
+            var dependencyAttributes = arg.GetCustomAttributes(false).OfType<DependencyAttribute>().ToList();
+            string name = dependencyAttributes.FirstOrDefault()?.Name;
+
+            var info = arg.ParameterType.GetTypeInfo();
+
+            if (info.IsClass && !info.IsAbstract)
             {
+                if (typeof(Delegate).GetTypeInfo().IsAssignableFrom(info) || 
+                    typeof(string) == arg.ParameterType || 
+                    info.IsEnum || 
+                    arg.ParameterType.IsArray || 
+                    info.IsPrimitive)
+                {
+                    return container.IsRegistered(arg.ParameterType);
+                }
+
                 return true;
             }
 
-            if (type.IsGenericType)
+            if (arg.ParameterType.IsGenericType)
             {
-                var gerericType = type.GetGenericTypeDefinition();
-                if ((gerericType == typeof(IEnumerable<>)) ||
+                var gerericType = arg.ParameterType.GetGenericTypeDefinition();
+                if (gerericType == typeof(IEnumerable<>) ||
                     gerericType.IsClass ||
-                    container.IsRegistered(gerericType))
+                    IsRegistered(gerericType))
                 {
                     return true;
                 }
             }
 
-            return container.IsRegistered(type);
+            return IsRegistered(arg.ParameterType);
+
+            bool IsRegistered(Type t) => string.IsNullOrEmpty(name)
+                ? container.IsRegistered(t)
+                : container.IsRegistered(t, name);
         }
 
         internal static T TryResolve<T>(this IUnityContainer container)
