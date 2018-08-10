@@ -60,17 +60,15 @@ namespace DS.Unity.Extensions.DependencyInjection
             var dependencyAttributes = arg.GetCustomAttributes(false).OfType<DependencyAttribute>().ToList();
             string name = dependencyAttributes.FirstOrDefault()?.Name;
 
-            var info = arg.ParameterType.GetTypeInfo();
-
-            if (info.IsClass && !info.IsAbstract)
+            if (arg.ParameterType.IsClass && !arg.ParameterType.IsAbstract)
             {
-                if (typeof(Delegate).GetTypeInfo().IsAssignableFrom(info) || 
-                    typeof(string) == arg.ParameterType || 
-                    info.IsEnum || 
-                    arg.ParameterType.IsArray || 
-                    info.IsPrimitive)
+                if (typeof(Delegate).GetTypeInfo().IsAssignableFrom(arg.ParameterType) || 
+                    typeof(string) == arg.ParameterType ||
+                    arg.ParameterType.IsEnum || 
+                    arg.ParameterType.IsArray ||
+                    arg.ParameterType.IsPrimitive)
                 {
-                    return container.IsRegistered(arg.ParameterType);
+                    return IsRegistered(arg.ParameterType);
                 }
 
                 return true;
