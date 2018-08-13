@@ -65,7 +65,6 @@ namespace DS.Unity.Extensions.DependencyInjection
                 if (typeof(Delegate).GetTypeInfo().IsAssignableFrom(arg.ParameterType) || 
                     typeof(string) == arg.ParameterType ||
                     arg.ParameterType.IsEnum || 
-                    arg.ParameterType.IsArray ||
                     arg.ParameterType.IsPrimitive)
                 {
                     return IsRegistered(arg.ParameterType);
